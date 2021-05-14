@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE DataKinds #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE TypeFamilies #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE TypeOperators #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE GADTs #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE TypeFamilyDependencies #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE AllowAmbiguousTypes #-}</span><span>
+</span><span id="line-7"></span><span class="hs-pragma">{-# LANGUAGE FlexibleInstances #-}</span><span>
+</span><span id="line-8"></span><span class="hs-pragma">{-# LANGUAGE FlexibleContexts #-}</span><span>
+</span><span id="line-9"></span><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-10"></span><span class="hs-pragma">{-# LANGUAGE RankNTypes #-}</span><span>
+</span><span id="line-11"></span><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses #-}</span><span>
+</span><span id="line-12"></span><span class="hs-pragma">{-# LANGUAGE ConstraintKinds #-}</span><span>
+</span><span id="line-13"></span><span class="hs-pragma">{-# LANGUAGE RecursiveDo #-}</span><span>
+</span><span id="line-14"></span><span class="hs-pragma">{-# LANGUAGE OverloadedLabels #-}</span><span>
+</span><span id="line-15"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-16"></span><span class="hs-pragma">{-# OPTIONS -Wno-orphans #-}</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Codec.Candid.TypTable</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">M</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Lazy</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Void</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Prettyprint.Doc</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.DList</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">singleton</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">DList</span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Graph</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Codec.Candid.Types.html"><span class="hs-identifier">Codec.Candid.Types</span></a></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">data</span><span> </span><span id="SeqDesc"><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-var">SeqDesc</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>    </span><span id="SeqDesc"><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-var">SeqDesc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679402237"><span class="annot"><a href="#local-6989586621679402237"><span class="hs-identifier hs-type">k</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Pretty</span></span><span> </span><span class="annot"><a href="#local-6989586621679402237"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679402237"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">M.Map</span></span><span> </span><span class="annot"><a href="#local-6989586621679402237"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402237"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402237"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679402234"><span class="annot"><span class="hs-identifier hs-type">Pretty</span></span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>    </span><span id="local-6989586621679402232"><span class="annot"><span class="annottext">pretty :: SeqDesc -&gt; Doc ann
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">pretty</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span> </span><span id="local-6989586621679402230"><span class="annot"><span class="annottext">m :: Map k (Type k)
+</span><a href="#local-6989586621679402230"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679402229"><span class="annot"><span class="annottext">ts :: [Type k]
+</span><a href="#local-6989586621679402229"><span class="hs-identifier hs-var">ts</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([(k, Type k)], [Type k]) -&gt; Doc ann
+forall a ann. Pretty a =&gt; a -&gt; Doc ann
+</span><span class="hs-identifier hs-var">pretty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map k (Type k) -&gt; [(k, Type k)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">M.toList</span></span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402230"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[Type k]
+</span><a href="#local-6989586621679402229"><span class="hs-identifier hs-var">ts</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">data</span><span> </span><span id="Ref"><span class="annot"><a href="Codec.Candid.TypTable.html#Ref"><span class="hs-identifier hs-var">Ref</span></a></span></span><span> </span><span id="local-6989586621679402227"><span class="annot"><a href="#local-6989586621679402227"><span class="hs-identifier hs-type">k</span></a></span></span><span> </span><span id="local-6989586621679402226"><span class="annot"><a href="#local-6989586621679402226"><span class="hs-identifier hs-type">f</span></a></span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="Ref"><span class="annot"><a href="Codec.Candid.TypTable.html#Ref"><span class="hs-identifier hs-var">Ref</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679402227"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679402226"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.TypTable.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402227"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402226"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="annot"><a href="Codec.Candid.TypTable.html#buildSeqDesc"><span class="hs-identifier hs-type">buildSeqDesc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679402223"><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Pretty</span></span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.TypTable.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span>
+</span><span id="line-38"></span><span id="buildSeqDesc"><span class="annot"><span class="annottext">buildSeqDesc :: [Type (Ref k Type)] -&gt; SeqDesc
+</span><a href="Codec.Candid.TypTable.html#buildSeqDesc"><span class="hs-identifier hs-var hs-var">buildSeqDesc</span></a></span></span><span> </span><span id="local-6989586621679402222"><span class="annot"><span class="annottext">ts :: [Type (Ref k Type)]
+</span><a href="#local-6989586621679402222"><span class="hs-identifier hs-var">ts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map k (Type k) -&gt; [Type k] -&gt; SeqDesc
+forall k.
+(Pretty k, Ord k) =&gt;
+Map k (Type k) -&gt; [Type k] -&gt; SeqDesc
+</span><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-var">SeqDesc</span></a></span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402221"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">[Type k]
+</span><a href="#local-6989586621679402220"><span class="hs-identifier hs-var">ts'</span></a></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679402220"><span class="annot"><span class="annottext">ts' :: [Type k]
+</span><a href="#local-6989586621679402220"><span class="hs-identifier hs-var">ts'</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679402221"><span class="annot"><span class="annottext">m :: Map k (Type k)
+</span><a href="#local-6989586621679402221"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">State (Map k (Type k)) [Type k]
+-&gt; Map k (Type k) -&gt; ([Type k], Map k (Type k))
+forall s a. State s a -&gt; s -&gt; (a, s)
+</span><span class="hs-identifier hs-var">runState</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Type (Ref k Type) -&gt; StateT (Map k (Type k)) Identity (Type k))
+-&gt; [Type (Ref k Type)] -&gt; State (Map k (Type k)) [Type k]
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Traversable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m (t b)
+</span><span class="hs-identifier hs-var">mapM</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ref k Type -&gt; StateT (Map k (Type k)) Identity k)
+-&gt; Type (Ref k Type) -&gt; StateT (Map k (Type k)) Identity (Type k)
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Traversable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m (t b)
+</span><span class="hs-identifier hs-var">mapM</span></span><span> </span><span class="annot"><span class="annottext">Ref k Type -&gt; StateT (Map k (Type k)) Identity k
+</span><a href="#local-6989586621679402217"><span class="hs-identifier hs-var">go</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Type (Ref k Type)]
+</span><a href="#local-6989586621679402222"><span class="hs-identifier hs-var">ts</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="#local-6989586621679402217"><span class="hs-identifier hs-type">go</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">State</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">M.Map</span></span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679402223"><span class="hs-identifier hs-type">k</span></a></span><span>
+</span><span id="line-43"></span><span>    </span><span id="local-6989586621679402217"><span class="annot"><span class="annottext">go :: Ref k Type -&gt; StateT (Map k (Type k)) Identity k
+</span><a href="#local-6989586621679402217"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.TypTable.html#Ref"><span class="hs-identifier hs-type">Ref</span></a></span><span> </span><span id="local-6989586621679402216"><span class="annot"><span class="annottext">k :: k
+</span><a href="#local-6989586621679402216"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span id="local-6989586621679402215"><span class="annot"><span class="annottext">t :: Type (Ref k Type)
+</span><a href="#local-6989586621679402215"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-44"></span><span>        </span><span id="local-6989586621679402214"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679402214"><span class="hs-identifier hs-var">seen</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(Map k (Type k) -&gt; Bool) -&gt; StateT (Map k (Type k)) Identity Bool
+forall s (m :: * -&gt; *) a. MonadState s m =&gt; (s -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">gets</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">k -&gt; Map k (Type k) -&gt; Bool
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Bool
+</span><span class="hs-identifier hs-var">M.member</span></span><span> </span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402216"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>        </span><span class="annot"><span class="annottext">Bool
+-&gt; StateT (Map k (Type k)) Identity ()
+-&gt; StateT (Map k (Type k)) Identity ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">unless</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679402214"><span class="hs-identifier hs-var">seen</span></a></span><span> </span><span class="annot"><span class="annottext">(StateT (Map k (Type k)) Identity ()
+ -&gt; StateT (Map k (Type k)) Identity ())
+-&gt; StateT (Map k (Type k)) Identity ()
+-&gt; StateT (Map k (Type k)) Identity ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">mdo</span><span>
+</span><span id="line-46"></span><span>            </span><span class="annot"><span class="annottext">(Map k (Type k) -&gt; Map k (Type k))
+-&gt; StateT (Map k (Type k)) Identity ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; (s -&gt; s) -&gt; m ()
+</span><span class="hs-identifier hs-var">modify</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">k -&gt; Type k -&gt; Map k (Type k) -&gt; Map k (Type k)
+forall k a. Ord k =&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.insert</span></span><span> </span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402216"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">Type k
+</span><a href="#local-6989586621679402208"><span class="hs-identifier hs-var">t'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>            </span><span id="local-6989586621679402208"><span class="annot"><span class="annottext">Type k
+</span><a href="#local-6989586621679402208"><span class="hs-identifier hs-var">t'</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(Ref k Type -&gt; StateT (Map k (Type k)) Identity k)
+-&gt; Type (Ref k Type) -&gt; StateT (Map k (Type k)) Identity (Type k)
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Traversable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m (t b)
+</span><span class="hs-identifier hs-var">mapM</span></span><span> </span><span class="annot"><span class="annottext">Ref k Type -&gt; StateT (Map k (Type k)) Identity k
+</span><a href="#local-6989586621679402217"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Type (Ref k Type)
+</span><a href="#local-6989586621679402215"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-48"></span><span>            </span><span class="annot"><span class="annottext">() -&gt; StateT (Map k (Type k)) Identity ()
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>        </span><span class="annot"><span class="annottext">k -&gt; StateT (Map k (Type k)) Identity k
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402216"><span class="hs-identifier hs-var">k</span></a></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Codec.Candid.TypTable.html#voidEmptyTypes"><span class="hs-identifier hs-type">voidEmptyTypes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span>
+</span><span id="line-52"></span><span id="voidEmptyTypes"><span class="annot"><span class="annottext">voidEmptyTypes :: SeqDesc -&gt; SeqDesc
+</span><a href="Codec.Candid.TypTable.html#voidEmptyTypes"><span class="hs-identifier hs-var hs-var">voidEmptyTypes</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span> </span><span id="local-6989586621679402206"><span class="annot"><span class="annottext">m :: Map k (Type k)
+</span><a href="#local-6989586621679402206"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679402205"><span class="annot"><span class="annottext">ts :: [Type k]
+</span><a href="#local-6989586621679402205"><span class="hs-identifier hs-var">ts</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map k (Type k) -&gt; [Type k] -&gt; SeqDesc
+forall k.
+(Pretty k, Ord k) =&gt;
+Map k (Type k) -&gt; [Type k] -&gt; SeqDesc
+</span><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-var">SeqDesc</span></a></span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402204"><span class="hs-identifier hs-var">m'</span></a></span><span> </span><span class="annot"><span class="annottext">[Type k]
+</span><a href="#local-6989586621679402205"><span class="hs-identifier hs-var">ts</span></a></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679402203"><span class="annot"><span class="annottext">edges :: [(k, k, [k])]
+</span><a href="#local-6989586621679402203"><span class="hs-identifier hs-var hs-var">edges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402202"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402202"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">DList k -&gt; [k]
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; [a]
+</span><span class="hs-identifier hs-var">toList</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type k -&gt; DList k
+forall k. Type k -&gt; DList k
+</span><a href="Codec.Candid.TypTable.html#underRec"><span class="hs-identifier hs-var">underRec</span></a></span><span> </span><span class="annot"><span class="annottext">Type k
+</span><a href="#local-6989586621679402199"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679402202"><span class="annot"><span class="annottext">k :: k
+</span><a href="#local-6989586621679402202"><span class="hs-identifier hs-var">k</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679402199"><span class="annot"><span class="annottext">t :: Type k
+</span><a href="#local-6989586621679402199"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Map k (Type k) -&gt; [(k, Type k)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">M.toList</span></span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402206"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-55"></span><span>    </span><span id="local-6989586621679402198"><span class="annot"><span class="annottext">sccs :: [SCC k]
+</span><a href="#local-6989586621679402198"><span class="hs-identifier hs-var hs-var">sccs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(k, k, [k])] -&gt; [SCC k]
+forall key node. Ord key =&gt; [(node, key, [key])] -&gt; [SCC node]
+</span><span class="hs-identifier hs-var">stronglyConnComp</span></span><span> </span><span class="annot"><span class="annottext">[(k, k, [k])]
+</span><a href="#local-6989586621679402203"><span class="hs-identifier hs-var">edges</span></a></span><span>
+</span><span id="line-56"></span><span>    </span><span id="local-6989586621679402196"><span class="annot"><span class="annottext">bad :: [k]
+</span><a href="#local-6989586621679402196"><span class="hs-identifier hs-var hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[[k]] -&gt; [k]
+forall (t :: * -&gt; *) a. Foldable t =&gt; t [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">concat</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">[k]
+</span><a href="#local-6989586621679402194"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CyclicSCC</span></span><span> </span><span id="local-6989586621679402194"><span class="annot"><span class="annottext">xs :: [k]
+</span><a href="#local-6989586621679402194"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[SCC k]
+</span><a href="#local-6989586621679402198"><span class="hs-identifier hs-var">sccs</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-57"></span><span>    </span><span id="local-6989586621679402204"><span class="annot"><span class="annottext">m' :: Map k (Type k)
+</span><a href="#local-6989586621679402204"><span class="hs-identifier hs-var hs-var">m'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Map k (Type k) -&gt; k -&gt; Map k (Type k))
+-&gt; Map k (Type k) -&gt; [k] -&gt; Map k (Type k)
+forall (t :: * -&gt; *) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl'</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679402191"><span class="annot"><span class="annottext">m :: Map k (Type k)
+</span><a href="#local-6989586621679402191"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679402190"><span class="annot"><span class="annottext">k :: k
+</span><a href="#local-6989586621679402190"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">k -&gt; Type k -&gt; Map k (Type k) -&gt; Map k (Type k)
+forall k a. Ord k =&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.insert</span></span><span> </span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402190"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">Type k
+forall a. Type a
+</span><a href="Codec.Candid.Types.html#EmptyT"><span class="hs-identifier hs-var">EmptyT</span></a></span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402191"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402206"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">[k]
+</span><a href="#local-6989586621679402196"><span class="hs-identifier hs-var">bad</span></a></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span id="local-6989586621679402268"><span class="annot"><a href="Codec.Candid.TypTable.html#underRec"><span class="hs-identifier hs-type">underRec</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402268"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DList</span></span><span> </span><span class="annot"><a href="#local-6989586621679402268"><span class="hs-identifier hs-type">k</span></a></span></span><span>
+</span><span id="line-61"></span><span id="underRec"><span class="annot"><span class="annottext">underRec :: Type k -&gt; DList k
+</span><a href="Codec.Candid.TypTable.html#underRec"><span class="hs-identifier hs-var hs-var">underRec</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.Types.html#RefT"><span class="hs-identifier hs-type">RefT</span></a></span><span> </span><span id="local-6989586621679402187"><span class="annot"><span class="annottext">x :: k
+</span><a href="#local-6989586621679402187"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">k -&gt; DList k
+forall a. a -&gt; DList a
+</span><span class="hs-identifier hs-var">singleton</span></span><span> </span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402187"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Codec.Candid.TypTable.html#underRec"><span class="hs-identifier hs-var">underRec</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.Types.html#RecT"><span class="hs-identifier hs-type">RecT</span></a></span><span> </span><span id="local-6989586621679402185"><span class="annot"><span class="annottext">fs :: Fields k
+</span><a href="#local-6989586621679402185"><span class="hs-identifier hs-var">fs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((FieldName, Type k) -&gt; DList k) -&gt; Fields k -&gt; DList k
+forall (t :: * -&gt; *) m a.
+(Foldable t, Monoid m) =&gt;
+(a -&gt; m) -&gt; t a -&gt; m
+</span><span class="hs-identifier hs-var">foldMap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type k -&gt; DList k
+forall k. Type k -&gt; DList k
+</span><a href="Codec.Candid.TypTable.html#underRec"><span class="hs-identifier hs-var">underRec</span></a></span><span> </span><span class="annot"><span class="annottext">(Type k -&gt; DList k)
+-&gt; ((FieldName, Type k) -&gt; Type k)
+-&gt; (FieldName, Type k)
+-&gt; DList k
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(FieldName, Type k) -&gt; Type k
+forall a b. (a, b) -&gt; b
+</span><span class="hs-identifier hs-var">snd</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Fields k
+</span><a href="#local-6989586621679402185"><span class="hs-identifier hs-var">fs</span></a></span><span>
+</span><span id="line-63"></span><span class="annot"><a href="Codec.Candid.TypTable.html#underRec"><span class="hs-identifier hs-var">underRec</span></a></span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">DList k
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Codec.Candid.TypTable.html#tieKnot"><span class="hs-identifier hs-type">tieKnot</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span class="hs-special">]</span><span>
+</span><span id="line-66"></span><span id="tieKnot"><span class="annot"><span class="annottext">tieKnot :: SeqDesc -&gt; [Type Void]
+</span><a href="Codec.Candid.TypTable.html#tieKnot"><span class="hs-identifier hs-var hs-var">tieKnot</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.TypTable.html#SeqDesc"><span class="hs-identifier hs-type">SeqDesc</span></a></span><span> </span><span id="local-6989586621679402181"><span class="annot"><span class="annottext">m :: Map k (Type k)
+</span><a href="#local-6989586621679402181"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679402180"><span id="local-6989586621679402179"><span class="annot"><span class="annottext">[Type k]
+</span><a href="#local-6989586621679402179"><span class="hs-identifier hs-var">ts</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679402180"><span class="hs-identifier hs-type">k</span></a></span><span class="hs-special">]</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Type Void]
+</span><a href="#local-6989586621679402178"><span class="hs-identifier hs-var">ts'</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><a href="#local-6989586621679402177"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679402180"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span>
+</span><span id="line-69"></span><span>    </span><span id="local-6989586621679402177"><span class="annot"><span class="annottext">f :: k -&gt; Type Void
+</span><a href="#local-6989586621679402177"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679402176"><span class="annot"><span class="annottext">k :: k
+</span><a href="#local-6989586621679402176"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map k (Type Void)
+</span><a href="#local-6989586621679402175"><span class="hs-identifier hs-var">m'</span></a></span><span> </span><span class="annot"><span class="annottext">Map k (Type Void) -&gt; k -&gt; Type Void
+forall k a. Ord k =&gt; Map k a -&gt; k -&gt; a
+</span><span class="hs-operator hs-var">M.!</span></span><span> </span><span class="annot"><span class="annottext">k
+</span><a href="#local-6989586621679402176"><span class="hs-identifier hs-var">k</span></a></span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><a href="#local-6989586621679402175"><span class="hs-identifier hs-type">m'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">M.Map</span></span><span> </span><span class="annot"><a href="#local-6989586621679402180"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679402175"><span class="annot"><span class="annottext">m' :: Map k (Type Void)
+</span><a href="#local-6989586621679402175"><span class="hs-identifier hs-var hs-var">m'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type k -&gt; (k -&gt; Type Void) -&gt; Type Void
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">k -&gt; Type Void
+</span><a href="#local-6989586621679402177"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Type k -&gt; Type Void) -&gt; Map k (Type k) -&gt; Map k (Type Void)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Map k (Type k)
+</span><a href="#local-6989586621679402181"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><a href="#local-6989586621679402178"><span class="hs-identifier hs-type">ts'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Codec.Candid.Types.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span class="hs-special">]</span><span>
+</span><span id="line-73"></span><span>    </span><span id="local-6989586621679402178"><span class="annot"><span class="annottext">ts' :: [Type Void]
+</span><a href="#local-6989586621679402178"><span class="hs-identifier hs-var hs-var">ts'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type k -&gt; (k -&gt; Type Void) -&gt; Type Void
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">k -&gt; Type Void
+</span><a href="#local-6989586621679402177"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Type k -&gt; Type Void) -&gt; [Type k] -&gt; [Type Void]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">[Type k]
+</span><a href="#local-6989586621679402179"><span class="hs-identifier hs-var">ts</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span></pre></body></html>
